@@ -58,20 +58,18 @@ PROTEUS_EXTRA_FC_COMPILE_ARGS= ['-Wall']
 PROTEUS_EXTRA_FC_LINK_ARGS=['-L'+PROTEUS_LIB_DIR,'-lopenblas']
 
 
-PROTEUS_BLAS_INCLUDE_DIR   = '.'
+PROTEUS_BLAS_INCLUDE_DIR, PROTEUS_BLAS_LIB_DIR = get_flags('blas')
 if platform_blas_h:
     PROTEUS_BLAS_H = platform_blas_h
 else:
     PROTEUS_BLAS_H = r'"cblas.h"'
-PROTEUS_BLAS_LIB_DIR = PROTEUS_LIB_DIR
 PROTEUS_BLAS_LIB   = 'openblas'
 
-PROTEUS_LAPACK_INCLUDE_DIR = '.'
+PROTEUS_LAPACK_INCLUDE_DIR, PROTEUS_LAPACK_LIB_DIR = get_flags('blas')
 if platform_lapack_h:
     PROTEUS_LAPACK_H = platform_lapack_h
 else:
     PROTEUS_LAPACK_H   = r'"clapack.h"'
-PROTEUS_LAPACK_LIB_DIR = PROTEUS_LIB_DIR
 PROTEUS_LAPACK_LIB = 'openblas'
 if platform_lapack_integer:
     PROTEUS_LAPACK_INTEGER = platform_lapack_integer
