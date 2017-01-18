@@ -29,12 +29,6 @@ elif sys.platform == 'linux2':
     platform_blas_h = r'"proteus_blas.h"'
     platform_lapack_h = r'"proteus_lapack.h"'
 
-PROTEUS_EXTRA_COMPILE_ARGS= ['-Wall',
-                             '-DF77_POST_UNDERSCORE',
-                             '-DUSE_BLAS',
-                             '-DCMRVEC_BOUNDS_CHECK',
-                             '-DMV_VECTOR_BOUNDS_CHECK'] + platform_extra_compile_args
-
 def get_flags(package):
     """ Checks the environment for presence of PACKAGE_DIR
 
@@ -52,10 +46,14 @@ def get_flags(package):
         lib_dir = PROTEUS_LIB_DIR
     return include_dir, lib_dir
 
-PROTEUS_EXTRA_LINK_ARGS=platform_extra_link_args+['-lopenblas']
-
+PROTEUS_EXTRA_COMPILE_ARGS= ['-Wall',
+                             '-DF77_POST_UNDERSCORE',
+                             '-DUSE_BLAS',
+                             '-DCMRVEC_BOUNDS_CHECK',
+                             '-DMV_VECTOR_BOUNDS_CHECK'] + platform_extra_compile_args
+PROTEUS_EXTRA_LINK_ARGS=platform_extra_link_args
 PROTEUS_EXTRA_FC_COMPILE_ARGS= ['-Wall']
-PROTEUS_EXTRA_FC_LINK_ARGS=['-L'+PROTEUS_LIB_DIR,'-lopenblas']
+PROTEUS_EXTRA_FC_LINK_ARGS=platform_extra_link_args
 
 
 PROTEUS_BLAS_INCLUDE_DIR, PROTEUS_BLAS_LIB_DIR = get_flags('blas')
