@@ -2,13 +2,11 @@ from proteus import iproteus as ip
 from proteus import default_p as p
 from proteus import default_n as n
 from proteus import default_s,default_so
-reload(p)
-reload(n)
 import numpy
 import proteus as pr
 
 p.nd = 2
-p.name = "Laplace_matrix_test"
+p.name = "Mass_matrix_test"
 
 p.rdomain = pr.Domain.unitSimplex(2)
 p.polyfile = "reference_triangle_2d"
@@ -27,7 +25,7 @@ p.advectiveFluxBoundaryConditions = {}
 p.diffusiveFluxBoundaryConditions = {}
 p.periodicDirichletConditions = None
 
-p.coefficients = pr.TransportCoefficients.DiscreteLaplaceOperator(p.nd)
+p.coefficients = pr.TransportCoefficients.DiscreteMassMatrix(p.nd)
 
 ############################
 
@@ -36,10 +34,7 @@ n.nDTout = 1
 n.T = 1
 n.parallel = False
 
-n.femSpaces = {0:pr.FemTools.C0_AffineLinearOnSimplexWithNodalBasis,
-               1:pr.FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis,
-               2:pr.FemTools.C0_AffineQuadraticOnSimplexWithNodalBasis}
-
+n.femSpaces = dict((i,pr.FemTools.C0_AffineLinearOnSimplexWithNodalBasis) for i in range(p.nc))
 n.elementQuadrature = pr.Quadrature.SimplexGaussQuadrature(p.nd,4)
 n.elementBoundaryQuadrature = pr.Quadrature.SimplexGaussQuadrature(p.nd-1,4)
 n.nn = 3
@@ -68,4 +63,3 @@ so.sList=[default_s]
 from proteus import *
 opts = None
 ns = NumericalSolution.NS_base(so,[p],[n],so.sList,ip.opts)
-ns.ar[0].hdfFile.close()
