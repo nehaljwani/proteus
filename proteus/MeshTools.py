@@ -6233,6 +6233,7 @@ class MeshOptions:
         self.restrictFineSolutionToAllMeshes = False
         self.parallelPartitioningType = MeshParallelPartitioningTypes.node
         self.nLayersOfOverlapForParallel = 1
+        self.mshfile = None
         self.triangleOptions = "q30DenA" # defined when setTriangleOptions called
         self.nLevels = 1
         if domain is not None:

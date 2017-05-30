@@ -239,16 +239,21 @@ class NS_base:  # (HasTraits):
                                                                      parallelPartitioningType=n.parallelPartitioningType)
 
             elif isinstance(p.domain,Domain.PlanarStraightLineGraphDomain):
-                if p.domain.use_gmsh is True:
-                    if comm.isMaster() and (p.genMesh or not (os.path.exists(p.domain.geofile+".ele") and
-                                                              os.path.exists(p.domain.geofile+".node") and
-                                                              os.path.exists(p.domain.geofile+".edge"))):
-                        logEvent("Running gmsh to generate 2D mesh for "+p.name,level=1)
-                        gmsh_cmd = "time gmsh {0:s} -v 10 -2 -o {1:s} -format msh".format(p.domain.geofile+".geo", p.domain.geofile+".msh")
-                        logEvent("Calling gmsh on rank 0 with command %s" % (gmsh_cmd,))
-                        check_call(gmsh_cmd, shell=True)
-                        logEvent("Done running gmsh; converting to triangle")
-                        MeshTools.msh2simplex(fileprefix=p.domain.geofile, nd=2)
+                if p.domain.use_gmsh is True or p.domain.MeshOptions.mshfile is not None:
+                    if p.domain.MeshOptions.mshfile is None:
+                        fileprefix = p.domain.geofile
+                    else:
+                        fileprefix = p.domain.MeshOptions.mshfile
+                    if comm.isMaster() and (p.genMesh or not (os.path.exists(fileprefix+".ele") and
+                                                              os.path.exists(fileprefix+".node") and
+                                                              os.path.exists(fileprefix+".edge"))):
+                        if p.domain.MeshOptions.mshfile is None:
+                            logEvent("Running gmsh to generate 2D mesh for "+p.name,level=1)
+                            gmsh_cmd = "time gmsh {0:s} -v 10 -2 -o {1:s} -format msh".format(fileprefix+".geo", fileprefix+".msh")
+                            logEvent("Calling gmsh on rank 0 with command %s" % (gmsh_cmd,))
+                            check_call(gmsh_cmd, shell=True)
+                            logEvent("Done running gmsh; converting to triangle")
+                        MeshTools.msh2simplex(fileprefix=fileprefix, nd=2)
 
                     comm.barrier()
                     mesh = MeshTools.TriangularMesh()
@@ -257,7 +262,7 @@ class NS_base:  # (HasTraits):
                                                                 parallelPartitioningType=n.parallelPartitioningType)
                     logEvent("Generating %i-level mesh from coarse Triangle mesh" % (n.nLevels,))
                     logEvent("Generating coarse global mesh from Triangle files")
-                    mesh.generateFromTriangleFiles(filebase=p.domain.geofile,base=1)
+                    mesh.generateFromTriangleFiles(filebase=fileprefix,base=1)
                     logEvent("Generating partitioned %i-level mesh from coarse global Triangle mesh" % (n.nLevels,))
                     mlMesh.generateFromExistingCoarseMesh(mesh,n.nLevels,
                                                           nLayersOfOverlap=n.nLayersOfOverlapForParallel,
@@ -287,16 +292,20 @@ class NS_base:  # (HasTraits):
             elif isinstance(p.domain,Domain.PiecewiseLinearComplexDomain):
                 from subprocess import call
                 import sys
-                if p.domain.use_gmsh is True:
+                if p.domain.MeshOptions.mshfile is not None:
+                    fileprefix = p.domain.MeshOptions.mshfile
+                elif p.domain.use_gmsh is True:
                     fileprefix = p.domain.geofile
                 else:
                     fileprefix = p.domain.polyfile
-                if comm.rank() == 0 and (p.genMesh or not (os.path.exists(p.domain.polyfile+".ele") and
-                                                           os.path.exists(p.domain.polyfile+".node") and
-                                                           os.path.exists(p.domain.polyfile+".face"))):
-                    if p.domain.use_gmsh is True:
+                if comm.rank() == 0 and (p.genMesh or not (os.path.exists(fileprefix+".ele") and
+                                                           os.path.exists(fileprefix+".node") and
+                                                           os.path.exists(fileprefix+".face"))):
+                    if p.domain.MeshOptions.mshfile is None:
+                        MeshTools.msh2simplex(fileprefix=fileprefix, nd=3)
+                    elif p.domain.use_gmsh is True:
                         logEvent("Running gmsh to generate 3D mesh for "+p.name,level=1)
-                        gmsh_cmd = "time gmsh {0:s} -v 10 -3 -o {1:s} -format msh".format(fileprefix+'.geo', p.domain.geofile+'.msh')
+                        gmsh_cmd = "time gmsh {0:s} -v 10 -3 -o {1:s} -format msh".format(fileprefix+'.geo', fileprefix+'.msh')
                         logEvent("Calling gmsh on rank 0 with command %s" % (gmsh_cmd,))
                         check_call(gmsh_cmd, shell=True)
                         logEvent("Done running gmsh; converting to tetgen")
@@ -304,7 +313,7 @@ class NS_base:  # (HasTraits):
                         check_call("tetgen -Vfeen {0:s}.ele".format(fileprefix), shell=True)
                     else:
                         logEvent("Running tetgen to generate 3D mesh for "+p.name, level=1)
-                        tetcmd = "tetgen -{0} {1}.poly".format(n.triangleOptions, p.domain.polyfile)
+                        tetcmd = "tetgen -{0} {1}.poly".format(n.triangleOptions, fileprefix)
                         logEvent("Calling tetgen on rank 0 with command %s" % (tetcmd,))
                         check_call(tetcmd, shell=True)
                         logEvent("Done running tetgen")
